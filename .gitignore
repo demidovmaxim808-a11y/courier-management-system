@@ -1,0 +1,38 @@
+# Виртуальное окружение
+venv/
+env/
+.env/
+.venv/
+
+# Файлы IDE
+.vscode/
+.idea/
+*.iml
+.DS_Store
+
+# Системные файлы Mac
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Файлы Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.dylib
+
+# Логи и временные файлы
+*.log
+*.tmp
+*.temp
+
+# Базы данных
+*.db
+*.sqlite3
+
+# Файлы окружения
+.env
+.env.local
