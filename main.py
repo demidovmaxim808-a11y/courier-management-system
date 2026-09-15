@@ -1,122 +1,286 @@
-from datetime import date
+import couriers
+import orders
 
 
-# ===== ДОБАВЛЯЕМ ФУНКЦИЮ =====
-def check_courier_availability(courier_status, order_status, order_weight):
-    """
-    Функция проверяет, может ли курьер взять заказ.
+def print_header():
+    """Выводит заголовок."""
+    print("\n" + "=" * 60)
+    print("  СИСТЕМА УПРАВЛЕНИЯ КУРЬЕРАМИ")
+    print("=" * 60)
+
+
+def print_menu():
+    """Выводит главное меню."""
+    print("\n--- ГЛАВНОЕ МЕНЮ ---")
+    print("1. Добавить курьера")
+    print("2. Показать всех курьеров")
+    print("3. Найти курьера по имени")
+    print("4. Удалить курьера")
+    print("5. Изменить статус курьера")
+    print("6. Показать свободных курьеров")
+    print("7. Создать заказ")
+    print("8. Показать все заказы")
+    print("9. Назначить заказ курьеру")
+    print("10. Изменить статус заказа")
+    print("11. Удалить заказ")
+    print("0. Выход")
+    print("-" * 40)
+
+
+def menu_add_courier():
+    """Пункт меню: добавить курьера."""
+    print("\n--- ДОБАВЛЕНИЕ КУРЬЕРА ---")
+    name = input("Введите имя курьера: ")
+    phone = input("Введите телефон: ")
+    transport = input("Введите транспорт (автомобиль/велосипед/пешком): ")
+    zone = input("Введите зону обслуживания: ")
     
-    Параметры:
-    courier_status - статус курьера ("свободен", "занят", "не работает")
-    order_status - статус заказа ("новый", "в пути", "доставлен", "отменен")
-    order_weight - вес заказа в кг
+    courier = couriers.add_courier(name, phone, transport, zone)
+    print(f"\n✅ Курьер добавлен! ID: {courier['id']}")
+
+
+def menu_show_couriers():
+    """Пункт меню: показать всех курьеров."""
+    couriers.print_all_couriers()
+
+
+def menu_find_courier():
+    """Пункт меню: найти курьера по имени."""
+    print("\n--- ПОИСК КУРЬЕРА ---")
+    name_part = input("Введите часть имени: ")
+    found = couriers.find_couriers_by_name(name_part)
     
-    Возвращает:
-    (available, reason) - кортеж с результатом и причиной
-    """
+    if not found:
+        print(f"\n⚠ Курьеры по запросу '{name_part}' не найдены.")
+        return
     
-    # Проверка статуса курьера
-    if courier_status == "свободен":
-        courier_available = True
-    elif courier_status == "занят":
-        courier_available = False
-        return False, "Курьер уже занят другим заказом"
-    else:  # "не работает"
-        courier_available = False
-        return False, "Курьер не работает сегодня"
+    print(f"\n✅ Найдено курьеров: {len(found)}")
+    print("=" * 40)
+    for courier in found:
+        couriers.print_courier(courier)
+
+
+def menu_delete_courier():
+    """Пункт меню: удалить курьера."""
+    print("\n--- УДАЛЕНИЕ КУРЬЕРА ---")
+    couriers.print_all_couriers()
     
-    # Проверка статуса заказа
-    if order_status == "новый":
-        order_can_be_assigned = True
-    elif order_status == "в пути":
-        order_can_be_assigned = False
-        return False, "Заказ уже в пути"
-    elif order_status == "доставлен":
-        order_can_be_assigned = False
-        return False, "Заказ уже доставлен"
-    else:  # "отменен"
-        order_can_be_assigned = False
-        return False, "Заказ отменен"
+    if not couriers.couriers:
+        return
     
-    # Проверка веса заказа
-    if order_weight > 10:
-        return False, f"Вес заказа {order_weight} кг превышает допустимый лимит (10 кг)"
+    try:
+        courier_id = int(input("\nВведите ID курьера для удаления: "))
+    except ValueError:
+        print("❌ Некорректный ID.")
+        return
     
-    # Если все проверки пройдены
-    return True, "Заказ может быть назначен"
+    if couriers.delete_courier(courier_id):
+        print(f"✅ Курьер с ID {courier_id} удалён.")
+    else:
+        print(f"❌ Курьер с ID {courier_id} не найден.")
 
-# ===== ОСНОВНАЯ ПРОГРАММА =====
 
-# Данные о курьере
-courier_name = "Алексей Иванов"
-courier_phone = "+7 (999) 123-45-67"
-courier_transport = "автомобиль"
-courier_status = "свободен"
-courier_zone = "Центральный район"
+def menu_change_courier_status():
+    """Пункт меню: изменить статус курьера."""
+    print("\n--- ИЗМЕНЕНИЕ СТАТУСА КУРЬЕРА ---")
+    couriers.print_all_couriers()
+    
+    if not couriers.couriers:
+        return
+    
+    try:
+        courier_id = int(input("\nВведите ID курьера: "))
+    except ValueError:
+        print("❌ Некорректный ID.")
+        return
+    
+    print("Выберите новый статус:")
+    print("1. свободен")
+    print("2. занят")
+    print("3. не работает")
+    choice = input("Ваш выбор: ")
+    
+    statuses = {"1": "свободен", "2": "занят", "3": "не работает"}
+    if choice not in statuses:
+        print("❌ Некорректный выбор.")
+        return
+    
+    if couriers.update_courier_status(courier_id, statuses[choice]):
+        print(f"✅ Статус изменён на '{statuses[choice]}'.")
+    else:
+        print(f"❌ Курьер с ID {courier_id} не найден.")
 
-# Данные о заказе
-order_number = "ORD-2026-001"
-order_address = "ул. Ленина, д. 15, кв. 8"
-order_weight = 3.5  # кг
-order_cost = 450.0  # рублей
-order_status = "новый"
-order_date = date.today()
 
-# Контактные данные получателя
-recipient_name = "Мария Петрова"
-recipient_phone = "+7 (888) 765-43-21"
+def menu_show_available():
+    """Пункт меню: показать свободных курьеров."""
+    available = couriers.get_available_couriers()
+    
+    if not available:
+        print("\n⚠ Нет свободных курьеров.")
+        return
+    
+    print(f"\n✅ СВОБОДНЫХ КУРЬЕРОВ: {len(available)}")
+    print("=" * 40)
+    for courier in available:
+        couriers.print_courier(courier)
 
-# ===== ВЫВОД ИНФОРМАЦИИ =====
-print("=" * 60)
-print("СИСТЕМА УПРАВЛЕНИЯ КУРЬЕРАМИ")
-print("Проверка возможности назначения заказа")
-print("=" * 60)
 
-print("\n📦 ИНФОРМАЦИЯ О КУРЬЕРЕ:")
-print(f"  Имя: {courier_name}")
-print(f"  Телефон: {courier_phone}")
-print(f"  Транспорт: {courier_transport}")
-print(f"  Текущий статус: {courier_status}")
-print(f"  Зона обслуживания: {courier_zone}")
+def menu_add_order():
+    """Пункт меню: создать заказ."""
+    print("\n--- СОЗДАНИЕ ЗАКАЗА ---")
+    address = input("Введите адрес доставки: ")
+    recipient = input("Введите имя получателя: ")
+    phone = input("Введите телефон получателя: ")
+    
+    try:
+        weight = float(input("Введите вес заказа (кг): "))
+        cost = float(input("Введите стоимость заказа (руб.): "))
+    except ValueError:
+        print("❌ Некорректное число.")
+        return
+    
+    order = orders.add_order(address, recipient, phone, weight, cost)
+    print(f"\n✅ Заказ создан! Номер: {order['number']}, ID: {order['id']}")
 
-print("\n📋 ИНФОРМАЦИЯ О ЗАКАЗЕ:")
-print(f"  Номер заказа: {order_number}")
-print(f"  Адрес доставки: {order_address}")
-print(f"  Вес: {order_weight} кг")
-print(f"  Стоимость: {order_cost} руб.")
-print(f"  Текущий статус: {order_status}")
-print(f"  Дата создания: {order_date}")
-print(f"  Получатель: {recipient_name}")
-print(f"  Телефон получателя: {recipient_phone}")
 
-# ===== ВЫЗОВ ФУНКЦИИ =====
-print("\n" + "=" * 60)
-print("РЕЗУЛЬТАТ ПРОВЕРКИ (с использованием функции)")
-print("=" * 60)
+def menu_show_orders():
+    """Пункт меню: показать все заказы."""
+    orders.print_all_orders()
 
-# Вызываем функцию и получаем результат
-is_available, message = check_courier_availability(
-    courier_status, 
-    order_status, 
-    order_weight
-)
 
-# Выводим результат на основе возвращенных данных
-if is_available:
-    print("\n✅ ЗАКАЗ МОЖЕТ БЫТЬ НАЗНАЧЕН КУРЬЕРУ")
-    print(f"   Курьер: {courier_name}")
-    print(f"   Заказ: {order_number}")
-    print(f"   Вес: {order_weight} кг")
-    print(f"   Статус курьера: {courier_status}")
-    print(f"   Статус заказа: {order_status}")
-    print(f"   Примерное время доставки: 30-45 минут")
-else:
-    print("\n❌ ЗАКАЗ НЕ МОЖЕТ БЫТЬ НАЗНАЧЕН")
-    print(f"   Причина: {message}")
+def menu_assign_order():
+    """Пункт меню: назначить заказ курьеру."""
+    print("\n--- НАЗНАЧЕНИЕ ЗАКАЗА КУРЬЕРУ ---")
+    
+    new_orders = orders.get_new_orders()
+    if not new_orders:
+        print("\n⚠ Нет новых заказов для назначения.")
+        return
+    
+    print("\n📋 Новые заказы:")
+    print("=" * 40)
+    for order in new_orders:
+        orders.print_order(order)
+    
+    try:
+        order_id = int(input("Введите ID заказа: "))
+    except ValueError:
+        print("❌ Некорректный ID.")
+        return
+    
+    available = couriers.get_available_couriers()
+    if not available:
+        print("\n⚠ Нет свободных курьеров.")
+        return
+    
+    print("\n📦 Свободные курьеры:")
+    print("=" * 40)
+    for courier in available:
+        couriers.print_courier(courier)
+    
+    try:
+        courier_id = int(input("Введите ID курьера: "))
+    except ValueError:
+        print("❌ Некорректный ID.")
+        return
+    
+    success, message = orders.assign_order_to_courier(order_id, courier_id)
+    if success:
+        couriers.update_courier_status(courier_id, "занят")
+        print(f"\n✅ {message}")
+    else:
+        print(f"\n❌ {message}")
 
-print("\n" + "=" * 60)
-print("Конец проверки")
-print("=" * 60)
 
-print("\n📚 ИНФОРМАЦИЯ О МОДУЛЯХ:")
-print(f"  Модуль datetime использован для даты: {date.today()}")
+def menu_change_order_status():
+    """Пункт меню: изменить статус заказа."""
+    print("\n--- ИЗМЕНЕНИЕ СТАТУСА ЗАКАЗА ---")
+    orders.print_all_orders()
+    
+    if not orders.orders:
+        return
+    
+    try:
+        order_id = int(input("\nВведите ID заказа: "))
+    except ValueError:
+        print("❌ Некорректный ID.")
+        return
+    
+    print("Выберите новый статус:")
+    print("1. новый")
+    print("2. в пути")
+    print("3. доставлен")
+    print("4. отменен")
+    choice = input("Ваш выбор: ")
+    
+    statuses = {"1": "новый", "2": "в пути", "3": "доставлен", "4": "отменен"}
+    if choice not in statuses:
+        print("❌ Некорректный выбор.")
+        return
+    
+    if orders.update_order_status(order_id, statuses[choice]):
+        print(f"✅ Статус заказа изменён на '{statuses[choice]}'.")
+    else:
+        print(f"❌ Заказ с ID {order_id} не найден.")
+
+
+def menu_delete_order():
+    """Пункт меню: удалить заказ."""
+    print("\n--- УДАЛЕНИЕ ЗАКАЗА ---")
+    orders.print_all_orders()
+    
+    if not orders.orders:
+        return
+    
+    try:
+        order_id = int(input("\nВведите ID заказа для удаления: "))
+    except ValueError:
+        print("❌ Некорректный ID.")
+        return
+    
+    if orders.delete_order(order_id):
+        print(f"✅ Заказ с ID {order_id} удалён.")
+    else:
+        print(f"❌ Заказ с ID {order_id} не найден.")
+
+
+def main():
+    """Главная функция - запускает программу."""
+    print_header()
+    print("\nДобро пожаловать в систему управления курьерами!")
+    
+    while True:
+        print_menu()
+        choice = input("Выберите пункт меню: ")
+        
+        if choice == "1":
+            menu_add_courier()
+        elif choice == "2":
+            menu_show_couriers()
+        elif choice == "3":
+            menu_find_courier()
+        elif choice == "4":
+            menu_delete_courier()
+        elif choice == "5":
+            menu_change_courier_status()
+        elif choice == "6":
+            menu_show_available()
+        elif choice == "7":
+            menu_add_order()
+        elif choice == "8":
+            menu_show_orders()
+        elif choice == "9":
+            menu_assign_order()
+        elif choice == "10":
+            menu_change_order_status()
+        elif choice == "11":
+            menu_delete_order()
+        elif choice == "0":
+            print("\n👋 До свидания!")
+            break
+        else:
+            print("\n❌ Некорректный выбор. Попробуйте снова.")
+
+
+if __name__ == "__main__":
+    main()
