@@ -1,0 +1,20 @@
+[
+  {
+    "id": 1,
+    "name": "Свободный",
+    "phone": "+7-555",
+    "transport": "авто",
+    "zone": "Центр",
+    "status": "свободен",
+    "orders_done": 0
+  },
+  {
+    "id": 2,
+    "name": "Занятый",
+    "phone": "+7-666",
+    "transport": "авто",
+    "zone": "Центр",
+    "status": "занят",
+    "orders_done": 0
+  }
+]

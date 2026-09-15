@@ -1,7 +1,4 @@
-import sys
-import os
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-
+# tests/test_couriers.py
 import couriers
 
 
@@ -36,7 +33,7 @@ def test_delete_courier():
 
 def test_get_available_couriers():
     couriers.couriers.clear()
-    c1 = couriers.add_courier("Свободный", "+7-555", "авто", "Центр")
+    couriers.add_courier("Свободный", "+7-555", "авто", "Центр")
     c2 = couriers.add_courier("Занятый", "+7-666", "авто", "Центр")
     couriers.update_courier_status(c2["id"], "занят")
     available = couriers.get_available_couriers()
