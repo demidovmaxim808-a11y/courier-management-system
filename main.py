@@ -1,259 +1,253 @@
-import couriers
-import orders
-from utils import input_int, input_float, input_non_empty
+from typing import List
+
+import storage
+from models import Courier, Order, User
+from models.couriers import (
+    add_courier,
+    delete_courier,
+    find_couriers_by_name,
+    get_available_couriers,
+    show_couriers,
+    sort_couriers_by_name,
+)
+from models.orders import (
+    add_order,
+    assign_order_to_courier,
+    cancel_order,
+    delete_order,
+    find_order_by_id,
+    get_new_orders,
+    show_orders,
+)
+from models.users import add_user, find_user, find_user_by_id, show_users
+from utils import input_float, input_int, input_non_empty
 
 
 def print_header() -> None:
-    """Выводит заголовок программы."""
+    """Заголовок программы."""
     print("\n" + "=" * 60)
     print("  СИСТЕМА УПРАВЛЕНИЯ КУРЬЕРАМИ")
     print("=" * 60)
 
 
 def print_menu() -> None:
-    """Выводит главное меню."""
+    """Главное меню."""
     print("\n--- ГЛАВНОЕ МЕНЮ ---")
     print("1.  Добавить курьера")
     print("2.  Показать всех курьеров")
     print("3.  Найти курьера по имени")
     print("4.  Удалить курьера")
-    print("5.  Изменить статус курьера")
-    print("6.  Показать свободных курьеров")
-    print("7.  Создать заказ")
-    print("8.  Показать все заказы")
-    print("9.  Назначить заказ курьеру")
-    print("10. Изменить статус заказа")
-    print("11. Удалить заказ")
+    print("5.  Показать свободных курьеров")
+    print("6.  Отсортировать курьеров по имени")
+    print("7.  Добавить пользователя")
+    print("8.  Показать пользователей")
+    print("9.  Найти пользователя")
+    print("10. Создать заказ")
+    print("11. Показать все заказы")
+    print("12. Назначить заказ курьеру")
+    print("13. Отменить заказ")
+    print("14. Удалить заказ")
     print("0.  Выход")
     print("-" * 40)
 
 
-def menu_add_courier() -> None:
-    """Пункт меню: добавить курьера."""
+def menu_add_courier(couriers: List[Courier]) -> None:
+    """Добавить курьера."""
     print("\n--- ДОБАВЛЕНИЕ КУРЬЕРА ---")
-    name = input_non_empty("Введите имя курьера: ")
-    phone = input_non_empty("Введите телефон: ")
-    transport = input_non_empty("Введите транспорт (автомобиль/велосипед/пешком): ")
-    zone = input_non_empty("Введите зону обслуживания: ")
-
-    courier = couriers.add_courier(name, phone, transport, zone)
-    print(f"\n✅ Курьер добавлен! ID: {courier['id']}")
-
-
-def menu_show_couriers() -> None:
-    """Пункт меню: показать всех курьеров."""
-    couriers.print_all_couriers()
+    name = input_non_empty("Имя: ")
+    phone = input_non_empty("Телефон: ")
+    transport = input_non_empty("Транспорт: ")
+    zone = input_non_empty("Зона: ")
+    courier = add_courier(couriers, name, phone, transport, zone)
+    storage.save_couriers(couriers)
+    print(f"Курьер добавлен. ID: {courier.id}")
 
 
-def menu_find_courier() -> None:
-    """Пункт меню: найти курьера по имени."""
-    print("\n--- ПОИСК КУРЬЕРА ---")
-    name_part = input_non_empty("Введите часть имени: ")
-    found = couriers.find_couriers_by_name(name_part)
-
+def menu_find_courier(couriers: List[Courier]) -> None:
+    """Найти курьера по имени."""
+    query = input_non_empty("Часть имени: ")
+    found = find_couriers_by_name(couriers, query)
     if not found:
-        print(f"\n⚠ Курьеры по запросу '{name_part}' не найдены.")
+        print("Курьеры не найдены.")
         return
-
-    print(f"\n✅ Найдено курьеров: {len(found)}")
-    print("=" * 40)
-    for courier in found:
-        couriers.print_courier(courier)
+    for c in found:
+        print(f"  ID {c.id}: {c}")
 
 
-def menu_delete_courier() -> None:
-    """Пункт меню: удалить курьера."""
-    print("\n--- УДАЛЕНИЕ КУРЬЕРА ---")
-    couriers.print_all_couriers()
-
-    if not couriers.couriers:
-        return
-
-    courier_id = input_int("\nВведите ID курьера для удаления: ")
-
-    if couriers.delete_courier(courier_id):
-        print(f"✅ Курьер с ID {courier_id} удалён.")
+def menu_delete_courier(couriers: List[Courier]) -> None:
+    """Удалить курьера."""
+    show_couriers(couriers)
+    cid = input_int("ID курьера: ")
+    if delete_courier(couriers, cid):
+        storage.save_couriers(couriers)
+        print(f"Курьер {cid} удалён.")
     else:
-        print(f"❌ Курьер с ID {courier_id} не найден.")
+        print("Курьер не найден.")
 
 
-def menu_change_courier_status() -> None:
-    """Пункт меню: изменить статус курьера."""
-    print("\n--- ИЗМЕНЕНИЕ СТАТУСА КУРЬЕРА ---")
-    couriers.print_all_couriers()
-
-    if not couriers.couriers:
-        return
-
-    courier_id = input_int("\nВведите ID курьера: ")
-
-    print("Выберите новый статус:")
-    print("1. свободен")
-    print("2. занят")
-    print("3. не работает")
-    choice = input("Ваш выбор: ").strip()
-
-    statuses = {"1": "свободен", "2": "занят", "3": "не работает"}
-    if choice not in statuses:
-        print("❌ Некорректный выбор.")
-        return
-
-    if couriers.update_courier_status(courier_id, statuses[choice]):
-        print(f"✅ Статус изменён на '{statuses[choice]}'.")
-    else:
-        print(f"❌ Курьер с ID {courier_id} не найден.")
-
-
-def menu_show_available() -> None:
-    """Пункт меню: показать свободных курьеров."""
-    available = couriers.get_available_couriers()
-
+def menu_show_available(couriers: List[Courier]) -> None:
+    """Показать свободных курьеров."""
+    available = get_available_couriers(couriers)
     if not available:
-        print("\n⚠ Нет свободных курьеров.")
+        print("Нет свободных курьеров.")
         return
-
-    print(f"\n✅ СВОБОДНЫХ КУРЬЕРОВ: {len(available)}")
-    print("=" * 40)
-    for courier in available:
-        couriers.print_courier(courier)
+    for c in available:
+        print(f"  ID {c.id}: {c}")
 
 
-def menu_add_order() -> None:
-    """Пункт меню: создать заказ."""
+def menu_sort_couriers(couriers: List[Courier]) -> None:
+    """Сортировка курьеров по имени."""
+    sorted_couriers = sort_couriers_by_name(couriers)
+    for c in sorted_couriers:
+        print(f"  ID {c.id}: {c}")
+
+
+def menu_add_user(users: List[User]) -> None:
+    """Добавить пользователя."""
+    print("\n--- ДОБАВЛЕНИЕ ПОЛЬЗОВАТЕЛЯ ---")
+    name = input_non_empty("Имя: ")
+    email = input_non_empty("Email: ")
+    role = input_non_empty("Роль (диспетчер/админ): ")
+    user = add_user(users, name, email, role)
+    storage.save_users(users)
+    print(f"Пользователь добавлен. ID: {user.id}")
+
+
+def menu_find_user(users: List[User]) -> None:
+    """Найти пользователя."""
+    query = input_non_empty("Часть имени или email: ")
+    found = find_user(users, query)
+    if not found:
+        print("Пользователи не найдены.")
+        return
+    for u in found:
+        print(f"  ID {u.id}: {u}")
+
+
+def menu_add_order(orders: List[Order]) -> None:
+    """Создать заказ."""
     print("\n--- СОЗДАНИЕ ЗАКАЗА ---")
-    address = input_non_empty("Введите адрес доставки: ")
-    recipient = input_non_empty("Введите имя получателя: ")
-    phone = input_non_empty("Введите телефон получателя: ")
-    weight = input_float("Введите вес заказа (кг): ")
-    cost = input_float("Введите стоимость заказа (руб.): ")
-
-    order = orders.add_order(address, recipient, phone, weight, cost)
-    print(f"\n✅ Заказ создан! Номер: {order['number']}, ID: {order['id']}")
-
-
-def menu_show_orders() -> None:
-    """Пункт меню: показать все заказы."""
-    orders.print_all_orders()
+    address = input_non_empty("Адрес: ")
+    recipient = input_non_empty("Получатель: ")
+    phone = input_non_empty("Телефон: ")
+    weight = input_float("Вес (кг): ")
+    cost = input_float("Стоимость (руб.): ")
+    order = add_order(orders, address, recipient, phone, weight, cost)
+    storage.save_orders(orders)
+    print(f"Заказ создан. ID: {order.id}, номер: {order.number}")
 
 
-def menu_assign_order() -> None:
-    """Пункт меню: назначить заказ курьеру."""
-    print("\n--- НАЗНАЧЕНИЕ ЗАКАЗА КУРЬЕРУ ---")
-
-    new_orders = orders.get_new_orders()
+def menu_assign_order(
+    orders: List[Order], couriers: List[Courier], users: List[User]
+) -> None:
+    """Назначить заказ курьеру."""
+    new_orders = get_new_orders(orders)
     if not new_orders:
-        print("\n⚠ Нет новых заказов для назначения.")
+        print("Нет новых заказов.")
         return
+    show_orders(new_orders)
+    oid = input_int("ID заказа: ")
 
-    print("\n📋 Новые заказы:")
-    print("=" * 40)
-    for order in new_orders:
-        orders.print_order(order)
-
-    order_id = input_int("Введите ID заказа: ")
-
-    available = couriers.get_available_couriers()
+    available = get_available_couriers(couriers)
     if not available:
-        print("\n⚠ Нет свободных курьеров.")
+        print("Нет свободных курьеров.")
+        return
+    for c in available:
+        print(f"  ID {c.id}: {c}")
+    cid = input_int("ID курьера: ")
+
+    if not users:
+        print("Нет пользователей. Добавьте пользователя.")
+        return
+    show_users(users)
+    uid = input_int("ID пользователя: ")
+
+    courier = next((c for c in couriers if c.id == cid), None)
+    user = find_user_by_id(users, uid)
+    if courier is None or user is None:
+        print("Курьер или пользователь не найден.")
         return
 
-    print("\n📦 Свободные курьеры:")
-    print("=" * 40)
-    for courier in available:
-        couriers.print_courier(courier)
-
-    courier_id = input_int("Введите ID курьера: ")
-
-    success, message = orders.assign_order_to_courier(order_id, courier_id)
-    if success:
-        couriers.update_courier_status(courier_id, "занят")
-        print(f"\n✅ {message}")
+    if assign_order_to_courier(orders, oid, courier, user):
+        storage.save_orders(orders)
+        storage.save_couriers(couriers)
+        print("Заказ назначен.")
     else:
-        print(f"\n❌ {message}")
+        print("Не удалось назначить заказ (проверьте статус/вес).")
 
 
-def menu_change_order_status() -> None:
-    """Пункт меню: изменить статус заказа."""
-    print("\n--- ИЗМЕНЕНИЕ СТАТУСА ЗАКАЗА ---")
-    orders.print_all_orders()
-
-    if not orders.orders:
-        return
-
-    order_id = input_int("\nВведите ID заказа: ")
-
-    print("Выберите новый статус:")
-    print("1. новый")
-    print("2. в пути")
-    print("3. доставлен")
-    print("4. отменен")
-    choice = input("Ваш выбор: ").strip()
-
-    statuses = {"1": "новый", "2": "в пути", "3": "доставлен", "4": "отменен"}
-    if choice not in statuses:
-        print("❌ Некорректный выбор.")
-        return
-
-    if orders.update_order_status(order_id, statuses[choice]):
-        print(f"✅ Статус заказа изменён на '{statuses[choice]}'.")
+def menu_cancel_order(orders: List[Order], couriers: List[Courier]) -> None:
+    """Отменить заказ."""
+    show_orders(orders)
+    oid = input_int("ID заказа: ")
+    if cancel_order(orders, oid):
+        storage.save_orders(orders)
+        storage.save_couriers(couriers)
+        print("Заказ отменён.")
     else:
-        print(f"❌ Заказ с ID {order_id} не найден.")
+        print("Заказ не найден.")
 
 
-def menu_delete_order() -> None:
-    """Пункт меню: удалить заказ."""
-    print("\n--- УДАЛЕНИЕ ЗАКАЗА ---")
-    orders.print_all_orders()
-
-    if not orders.orders:
-        return
-
-    order_id = input_int("\nВведите ID заказа для удаления: ")
-
-    if orders.delete_order(order_id):
-        print(f"✅ Заказ с ID {order_id} удалён.")
+def menu_delete_order(orders: List[Order]) -> None:
+    """Удалить заказ."""
+    show_orders(orders)
+    oid = input_int("ID заказа: ")
+    if delete_order(orders, oid):
+        storage.save_orders(orders)
+        print("Заказ удалён.")
     else:
-        print(f"❌ Заказ с ID {order_id} не найден.")
+        print("Заказ не найден.")
 
 
 def main() -> None:
     """Точка запуска приложения."""
     print_header()
-    print("\nДобро пожаловать в систему управления курьерами!")
-    print(f"Загружено курьеров: {len(couriers.couriers)}")
-    print(f"Загружено заказов: {len(orders.orders)}")
+
+    couriers = storage.load_couriers()
+    users = storage.load_users()
+    orders = storage.load_orders(couriers, users)
+
+    print(f"Загружено курьеров: {len(couriers)}")
+    print(f"Загружено пользователей: {len(users)}")
+    print(f"Загружено заказов: {len(orders)}")
 
     while True:
         print_menu()
-        choice = input("Выберите пункт меню: ").strip()
+        choice = input("Выбор: ").strip()
 
         if choice == "1":
-            menu_add_courier()
+            menu_add_courier(couriers)
         elif choice == "2":
-            menu_show_couriers()
+            show_couriers(couriers)
         elif choice == "3":
-            menu_find_courier()
+            menu_find_courier(couriers)
         elif choice == "4":
-            menu_delete_courier()
+            menu_delete_courier(couriers)
         elif choice == "5":
-            menu_change_courier_status()
+            menu_show_available(couriers)
         elif choice == "6":
-            menu_show_available()
+            menu_sort_couriers(couriers)
         elif choice == "7":
-            menu_add_order()
+            menu_add_user(users)
         elif choice == "8":
-            menu_show_orders()
+            show_users(users)
         elif choice == "9":
-            menu_assign_order()
+            menu_find_user(users)
         elif choice == "10":
-            menu_change_order_status()
+            menu_add_order(orders)
         elif choice == "11":
-            menu_delete_order()
+            show_orders(orders)
+        elif choice == "12":
+            menu_assign_order(orders, couriers, users)
+        elif choice == "13":
+            menu_cancel_order(orders, couriers)
+        elif choice == "14":
+            menu_delete_order(orders)
         elif choice == "0":
-            print("\n👋 До свидания!")
+            print("\nДо свидания!")
             break
         else:
-            print("\n❌ Некорректный выбор. Попробуйте снова.")
+            print("Некорректный выбор.")
 
 
 if __name__ == "__main__":
