@@ -1,7 +1,9 @@
+"""Система управления курьерами — точка входа."""
+
 from typing import List
 
 import storage
-from models import Courier, Order, User
+from models import Courier, Order, Route, User
 from models.couriers import (
     add_courier,
     delete_courier,
@@ -15,9 +17,15 @@ from models.orders import (
     assign_order_to_courier,
     cancel_order,
     delete_order,
-    find_order_by_id,
     get_new_orders,
     show_orders,
+)
+from models.routes import (
+    add_route,
+    delete_route,
+    find_routes_by_courier,
+    get_active_routes,
+    show_routes,
 )
 from models.users import add_user, find_user, find_user_by_id, show_users
 from utils import input_float, input_int, input_non_empty
@@ -47,6 +55,11 @@ def print_menu() -> None:
     print("12. Назначить заказ курьеру")
     print("13. Отменить заказ")
     print("14. Удалить заказ")
+    print("15. Создать маршрут")
+    print("16. Показать маршруты")
+    print("17. Маршруты курьера")
+    print("18. Активные маршруты")
+    print("19. Удалить маршрут")
     print("0.  Выход")
     print("-" * 40)
 
@@ -199,6 +212,71 @@ def menu_delete_order(orders: List[Order]) -> None:
         print("Заказ не найден.")
 
 
+def menu_add_route(
+    routes: List[Route], couriers: List[Courier]
+) -> None:
+    """Создать маршрут для курьера."""
+    print("\n--- СОЗДАНИЕ МАРШРУТА ---")
+    if not couriers:
+        print("Нет курьеров.")
+        return
+    show_couriers(couriers)
+    cid = input_int("ID курьера: ")
+    courier = next((c for c in couriers if c.id == cid), None)
+    if courier is None:
+        print("Курьер не найден.")
+        return
+    route_date = input_non_empty("Дата маршрута (ГГГГ-ММ-ДД): ")
+    route = add_route(routes, courier, route_date)
+    storage.save_routes(routes)
+    print(f"Маршрут создан. ID: {route.id}")
+
+
+def menu_show_routes(routes: List[Route]) -> None:
+    """Показать все маршруты."""
+    show_routes(routes)
+
+
+def menu_routes_by_courier(
+    routes: List[Route], couriers: List[Courier]
+) -> None:
+    """Показать маршруты конкретного курьера."""
+    if not couriers:
+        print("Нет курьеров.")
+        return
+    show_couriers(couriers)
+    cid = input_int("ID курьера: ")
+    courier = next((c for c in couriers if c.id == cid), None)
+    if courier is None:
+        print("Курьер не найден.")
+        return
+    found = find_routes_by_courier(routes, courier)
+    if not found:
+        print("Маршрутов нет.")
+        return
+    show_routes(found)
+
+
+def menu_active_routes(routes: List[Route]) -> None:
+    """Показать активные маршруты."""
+    active = get_active_routes(routes)
+    if not active:
+        print("Активных маршрутов нет.")
+        return
+    show_routes(active)
+
+
+def menu_delete_route(routes: List[Route]) -> None:
+    """Удалить маршрут."""
+    show_routes(routes)
+    rid = input_int("ID маршрута: ")
+    if delete_route(routes, rid):
+        storage.save_routes(routes)
+        print("Маршрут удалён.")
+    else:
+        print("Маршрут не найден.")
+
+
 def main() -> None:
     """Точка запуска приложения."""
     print_header()
@@ -206,10 +284,12 @@ def main() -> None:
     couriers = storage.load_couriers()
     users = storage.load_users()
     orders = storage.load_orders(couriers, users)
+    routes = storage.load_routes(couriers, orders)
 
     print(f"Загружено курьеров: {len(couriers)}")
     print(f"Загружено пользователей: {len(users)}")
     print(f"Загружено заказов: {len(orders)}")
+    print(f"Загружено маршрутов: {len(routes)}")
 
     while True:
         print_menu()
@@ -243,6 +323,16 @@ def main() -> None:
             menu_cancel_order(orders, couriers)
         elif choice == "14":
             menu_delete_order(orders)
+        elif choice == "15":
+            menu_add_route(routes, couriers)
+        elif choice == "16":
+            menu_show_routes(routes)
+        elif choice == "17":
+            menu_routes_by_courier(routes, couriers)
+        elif choice == "18":
+            menu_active_routes(routes)
+        elif choice == "19":
+            menu_delete_route(routes)
         elif choice == "0":
             print("\nДо свидания!")
             break

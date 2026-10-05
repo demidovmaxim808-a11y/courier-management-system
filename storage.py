@@ -1,8 +1,10 @@
+"""Сохранение и загрузка данных с преобразованием в объекты."""
+
 import json
 import os
 from typing import List
 
-from models import Courier, Order, User
+from models import Courier, Order, Route, User
 from models.couriers import find_courier_by_id
 from models.users import find_user_by_id
 
@@ -10,6 +12,7 @@ DATA_DIR = "data"
 COURIERS_FILE = os.path.join(DATA_DIR, "couriers.json")
 ORDERS_FILE = os.path.join(DATA_DIR, "orders.json")
 USERS_FILE = os.path.join(DATA_DIR, "users.json")
+ROUTES_FILE = os.path.join(DATA_DIR, "routes.json")
 
 
 def ensure_data_dir() -> None:
@@ -139,6 +142,9 @@ def save_orders(orders: List[Order]) -> None:
         user_id = None
         if o.user is not None:
             user_id = o.user.id
+        route_id = None
+        if o.route is not None:
+            route_id = o.route.id
         data.append({
             "id": o.id,
             "number": o.number,
@@ -151,5 +157,51 @@ def save_orders(orders: List[Order]) -> None:
             "status": o.status,
             "courier_id": courier_id,
             "user_id": user_id,
+            "route_id": route_id,
         })
     _save_raw(ORDERS_FILE, data)
+
+
+def load_routes(
+    couriers: List[Courier], orders: List[Order]
+) -> List[Route]:
+    """Загрузить маршруты из JSON, восстановив связи с Courier и Order."""
+    raw = _load_raw(ROUTES_FILE)
+    routes = []
+    for item in raw:
+        courier = find_courier_by_id(couriers, item["courier_id"])
+        if courier is None:
+            continue
+        order_ids = item.get("order_ids", [])
+        route_orders = []
+        for oid in order_ids:
+            for order in orders:
+                if order.id == oid:
+                    route_orders.append(order)
+                    break
+        route = Route(
+            route_id=item["id"],
+            courier=courier,
+            route_date=item["date"],
+            orders=route_orders,
+            is_completed=item.get("is_completed", False),
+        )
+        for order in route_orders:
+            order.route = route
+        routes.append(route)
+    return routes
+
+
+def save_routes(routes: List[Route]) -> None:
+    """Сохранить маршруты в JSON (объекты → ID)."""
+    data = []
+    for r in routes:
+        order_ids = [o.id for o in r.orders]
+        data.append({
+            "id": r.id,
+            "courier_id": r.courier.id,
+            "date": r.date,
+            "order_ids": order_ids,
+            "is_completed": r.is_completed,
+        })
+    _save_raw(ROUTES_FILE, data)

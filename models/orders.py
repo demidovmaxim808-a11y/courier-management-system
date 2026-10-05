@@ -1,8 +1,13 @@
+"""Класс Order и функции работы с коллекцией заказов."""
+
 from datetime import date
-from typing import List, Optional
+from typing import List, Optional, TYPE_CHECKING
 
 from .couriers import Courier
 from .users import User
+
+if TYPE_CHECKING:
+    from .routes import Route
 
 
 class Order:
@@ -21,6 +26,7 @@ class Order:
         courier: Optional[Courier] = None,
         user: Optional[User] = None,
         status: str = "новый",
+        route: Optional["Route"] = None,
     ) -> None:
         """Создать объект заказа."""
         self.id = order_id
@@ -34,6 +40,16 @@ class Order:
         self.courier = courier
         self.user = user
         self.status = status
+        self.route = route
+
+    def assign_to_route(self, route: "Route") -> None:
+        """Добавить заказ в маршрут."""
+        self.route = route
+        route.add_order(self)
+
+    def is_in_route(self) -> bool:
+        """Проверить, привязан ли заказ к маршруту."""
+        return self.route is not None
 
     def assign_to(self, courier: Courier, user: User) -> None:
         """Назначить заказ курьеру."""
@@ -47,9 +63,12 @@ class Order:
         self.status = "отменен"
         if self.courier is not None and self.courier.status == "занят":
             self.courier.set_status("свободен")
+        if self.route is not None:
+            self.route.remove_order(self)
+            self.route = None
 
     def complete(self) -> None:
-        """Завершить заказ (доставлен)."""
+        """Завершить заказ."""
         self.status = "доставлен"
         if self.courier is not None:
             self.courier.complete_order()
@@ -63,10 +82,13 @@ class Order:
         courier_info = "не назначен"
         if self.courier is not None:
             courier_info = self.courier.name
+        route_info = ""
+        if self.route is not None:
+            route_info = f" | маршрут #{self.route.id}"
         return (
             f"{self.number}: {self.address} | "
             f"вес {self.weight} кг | статус: {self.status} | "
-            f"курьер: {courier_info}"
+            f"курьер: {courier_info}{route_info}"
         )
 
 
