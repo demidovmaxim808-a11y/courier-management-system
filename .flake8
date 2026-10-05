@@ -8,4 +8,15 @@ exclude =
     env,
     .env,
     build,
-    dist
+    dist,
+    migrations,
+    */migrations/*,
+    courier/admin.py,
+    courier/models.py,
+    courier/tests.py,
+    homepage/admin.py,
+    homepage/models.py,
+    homepage/tests.py,
+    order/admin.py,
+    order/models.py,
+    order/tests.py

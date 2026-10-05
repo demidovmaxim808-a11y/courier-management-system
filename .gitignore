@@ -1,38 +1,57 @@
 # Виртуальное окружение
 venv/
 env/
-.env/
 .venv/
+.env
+.env.local
 
-# Файлы IDE
+# Django
+*.log
+db.sqlite3
+db.sqlite3-journal
+/media/
+/staticfiles/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+.eggs/
+build/
+dist/
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Тестирование
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+
+# IDE
 .vscode/
 .idea/
 *.iml
-.DS_Store
+*.swp
+*.swo
 
-# Системные файлы Mac
+# macOS
 .DS_Store
 .AppleDouble
 .LSOverride
-
-# Файлы Python
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-.Python
-*.so
-*.dylib
+._*
 
 # Логи и временные файлы
 *.log
 *.tmp
-*.temp
+*.bak
+*.orig
 
-# Базы данных
-*.db
-*.sqlite3
+# Данные приложения (опционально — раскомментируй, если не хочешь хранить в Git)
+# data/*.json
 
-# Файлы окружения
-.env
-.env.local
+# Кэш линтера
+.flake8_cache/
