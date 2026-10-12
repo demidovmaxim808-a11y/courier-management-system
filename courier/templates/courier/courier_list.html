@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block title %}
+Курьеры - Система управления курьерами
+{% endblock %}
+
+{% block content %}
+<h1>Курьеры</h1>
+<p>Всего курьеров: {{ couriers|length }}</p>
+<div class="list-group">
+    {% for courier in couriers %}
+        {% include "courier/includes/courier_card.html" %}
+    {% empty %}
+        <p>Курьеры не найдены.</p>
+    {% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,22 @@
+<article class="card courier-card mb-3">
+    <div class="card-body">
+        <h2 class="card-title">
+            {{ courier.name|default:"Без имени" }}
+        </h2>
+        <p class="card-text">
+            Транспорт: {{ courier.transport }}
+        </p>
+        <p class="card-text">
+            Зона: {{ courier.zone }}
+        </p>
+        <p class="card-text">
+            Статус: {{ courier.status }}
+        </p>
+        <a
+            href="{% url 'courier:courier_detail' courier.id %}"
+            class="btn btn-primary"
+        >
+            Подробнее
+        </a>
+    </div>
+</article>

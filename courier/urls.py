@@ -1,8 +1,8 @@
-"""Маршруты приложения courier."""
-
 from django.urls import path
 
 from . import views
+
+app_name = "courier"
 
 urlpatterns = [
     path("", views.couriers_list, name="couriers"),

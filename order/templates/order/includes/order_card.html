@@ -1,0 +1,23 @@
+<article class="card order-card mb-3">
+    <div class="card-body">
+        <h2 class="card-title">
+            {{ order.number|default:"Без номера" }}
+        </h2>
+        <p class="card-text">
+            Адрес: {{ order.address }}
+        </p>
+        <p class="card-text">
+            Вес: {{ order.weight }} кг
+        </p>
+        <p class="card-text">
+            Статус:
+            {% include "order/includes/order_status.html" %}
+        </p>
+        <a
+            href="{% url 'order:order_detail' order.id %}"
+            class="btn btn-primary"
+        >
+            Подробнее
+        </a>
+    </div>
+</article>

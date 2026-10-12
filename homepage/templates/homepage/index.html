@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block title %}
+Главная - Система управления курьерами
+{% endblock %}
+
+{% block content %}
+<h1 class="display-4">Система управления курьерами</h1>
+<p class="lead">
+    Управление курьерами и заказами службы доставки.
+</p>
+<p>Основные разделы:</p>
+<a href="{% url 'courier:couriers' %}" class="btn btn-primary me-2">
+    Курьеры
+</a>
+<a href="{% url 'order:orders' %}" class="btn btn-secondary">
+    Заказы
+</a>
+{% endblock %}

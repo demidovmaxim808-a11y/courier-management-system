@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block title %}
+Заказы - Система управления курьерами
+{% endblock %}
+
+{% block content %}
+<h1>Заказы</h1>
+<p>Всего заказов: {{ orders|length }}</p>
+<div class="list-group">
+    {% for order in orders %}
+        {% include "order/includes/order_card.html" %}
+    {% empty %}
+        <p>Заказы не найдены.</p>
+    {% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block title %}
+{% if order %}
+Заказ {{ order.number }} - Заказы
+{% else %}
+Заказ не найден - Заказы
+{% endif %}
+{% endblock %}
+
+{% block content %}
+{% if order %}
+<div class="card">
+    <div class="card-body">
+        <h1 class="card-title">Заказ {{ order.number }}</h1>
+        <p class="card-text"><strong>ID:</strong> {{ order.id }}</p>
+        <p class="card-text">
+            <strong>Адрес:</strong> {{ order.address }}
+        </p>
+        <p class="card-text">
+            <strong>Получатель:</strong> {{ order.recipient }}
+        </p>
+        <p class="card-text">
+            <strong>Телефон:</strong> {{ order.phone }}
+        </p>
+        <p class="card-text">
+            <strong>Вес:</strong> {{ order.weight }} кг
+        </p>
+        <p class="card-text">
+            <strong>Стоимость:</strong> {{ order.cost }} руб.
+        </p>
+        <p class="card-text">
+            <strong>Дата:</strong> {{ order.date }}
+        </p>
+        <p class="card-text">
+            <strong>Курьер:</strong>
+            {% if order.courier %}
+            {{ order.courier.name }}
+            {% else %}
+            не назначен
+            {% endif %}
+        </p>
+        <p class="card-text">
+            <strong>Статус:</strong>
+            {% include "order/includes/order_status.html" %}
+        </p>
+    </div>
+</div>
+{% else %}
+<h1 class="text-danger">Заказ не найден</h1>
+<p>Заказ с указанным идентификатором отсутствует.</p>
+{% endif %}
+
+<a
+    href="{% url 'order:orders' %}"
+    class="btn btn-outline-secondary mt-3"
+>
+    &larr; к списку заказов
+</a>
+{% endblock %}

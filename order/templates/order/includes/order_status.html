@@ -1,0 +1,17 @@
+{% if order.status == "доставлен" %}
+<span class="badge bg-success order-status order-status-done">
+    Доставлен
+</span>
+{% elif order.status == "отменен" %}
+<span class="badge bg-secondary order-status order-status-cancelled">
+    Отменён
+</span>
+{% elif order.status == "в пути" %}
+<span class="badge bg-warning order-status order-status-progress">
+    В пути
+</span>
+{% else %}
+<span class="badge bg-primary order-status order-status-new">
+    Новый
+</span>
+{% endif %}
