@@ -7,16 +7,12 @@
             Адрес: {{ order.address }}
         </p>
         <p class="card-text">
-            Вес: {{ order.weight }} кг
+            Курьер: {{ order.courier_name|default:"не назначен" }}
         </p>
         <p class="card-text">
-            Статус:
-            {% include "order/includes/order_status.html" %}
+            Статус: {{ order.status }}
         </p>
-        <a
-            href="{% url 'order:order_detail' order.id %}"
-            class="btn btn-primary"
-        >
+        <a href="{% url 'order:order_detail' order.id %}" class="btn btn-primary">
             Подробнее
         </a>
     </div>

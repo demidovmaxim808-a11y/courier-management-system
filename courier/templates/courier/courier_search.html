@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block title %}
+Поиск курьеров - Система управления курьерами
+{% endblock %}
+
+{% block content %}
+<h1>Поиск курьеров по зоне</h1>
+
+<form method="get" class="mb-4">
+    <div class="input-group">
+        <input
+            type="text"
+            name="zone"
+            class="form-control"
+            placeholder="Введите зону (например, Центральный)"
+            value="{{ zone_query }}"
+        >
+        <button type="submit" class="btn btn-primary">Найти</button>
+    </div>
+</form>
+
+{% if zone_query %}
+    <h2>Результаты для "{{ zone_query }}"</h2>
+    <div class="list-group">
+        {% for courier in couriers %}
+            {% include "courier/includes/courier_card.html" %}
+        {% empty %}
+            <p>Курьеры в этой зоне не найдены.</p>
+        {% endfor %}
+    </div>
+{% endif %}
+{% endblock %}

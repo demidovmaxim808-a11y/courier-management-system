@@ -10,160 +10,64 @@
 
 Курьерская доставка — процесс перемещения товаров от отправителя к получателю. Основные понятия: курьер, заказ, пользователь (диспетчер), маршрут.
 
-## Основные сущности
-
-### Courier — курьер
-
-Атрибуты: id, name, phone, transport, zone, status, orders_done.
-
-Методы: is_available(), can_take_order(), complete_order(), set_status(), __str__().
-
-### User — пользователь (диспетчер)
-
-Атрибуты: id, name, email, role.
-
-Методы: from_data(), __str__().
-
-### Order — заказ
-
-Атрибуты: id, number, address, recipient, phone, weight, cost, date, courier, user, route, status.
-
-Методы: assign_to(), assign_to_route(), cancel(), complete(), is_new(), is_in_route(), __str__().
-
-### Route — маршрут
-
-Атрибуты: id, courier, date, orders, is_completed.
-
-Методы: add_order(), remove_order(), get_total_weight(), get_total_cost(), get_orders_count(), complete(), __str__().
-
 ## Структура проекта
 
-courier-management-system/
+- `main.py`, `storage.py`, `utils.py`, `models/` — консольная версия и классы предметной области (ПР1–ПР3).
+- `couriermanager/`, `homepage/`, `courier/`, `order/` — Django-проект и приложения (ПР5–ПР6).
+- `data/` — JSON-файлы (исходные данные) и файл базы данных `courier.sqlite`.
+- `sql/` — SQL-команды схемы и запросы.
+- `db/` — скрипты подключения к базе и импорта данных.
+- `tests/` — тесты pytest для классов предметной области.
 
-- manage.py — управление Django-проектом
-- main.py — консольная версия
-- storage.py — JSON-загрузка и сохранение
-- utils.py — безопасный ввод
-- requirements.txt — зависимости
-- .flake8 — настройки линтера
-- .gitignore — исключения Git
-- README.md — документация
+## Веб-интерфейс
 
-- couriermanager/ — пакет настроек Django
-- homepage/ — Django-приложение: главная страница
-- courier/ — Django-приложение: курьеры
-- order/ — Django-приложение: заказы
-- models/ — классы предметной области (ПР3)
-- data/ — JSON-файлы данных
-- tests/ — тесты pytest
+Django-проект `couriermanager`, версия Django 5.2.
 
-## Веб-интерфейс (ПР5)
+Приложения: `homepage`, `courier`, `order`.
 
-Django-проект: couriermanager, версия Django 5.2.
+Основные страницы:
+- `/` — главная;
+- `/couriers/` — список курьеров;
+- `/couriers/<id>/` — карточка курьера;
+- `/couriers/search/?zone=...` — поиск курьеров по зоне;
+- `/orders/` — список заказов;
+- `/orders/<id>/` — карточка заказа;
+- `/orders/statistics/` — статистика заказов по курьерам.
 
-Приложения: homepage, courier, order.
+Оформление: Bootstrap 5.3 + собственные стили в `homepage/static/homepage/css/style.css`.
 
-Локализация: ru-RU, Europe/Moscow.
+## База данных SQLite (ПР7)
 
-### Страницы
+Данные проекта переведены из JSON в реляционную базу данных SQLite.
 
-- / — главная (homepage.views.index)
-- /couriers/ — список курьеров (courier.views.couriers_list)
-- /couriers/<int:courier_id>/ — карточка курьера (courier.views.courier_detail)
-- /orders/ — список заказов (order.views.orders_list)
-- /orders/<int:order_id>/ — карточка заказа (order.views.order_detail)
+### Файлы базы данных
+- `data/courier.sqlite` — файл базы данных.
+- `sql/schema.sql` — команды создания таблиц.
+- `sql/queries.sql` — 10 SQL-запросов.
+- `db/database.py` — подключение к базе.
+- `db/import_json.py` — импорт данных из JSON.
 
-При несуществующем идентификаторе возвращается страница с кодом 404.
+### Таблицы
+- `couriers` — курьеры (id, name, phone, transport, zone, status, orders_done).
+- `users` — пользователи (id, name, email, role).
+- `orders` — заказы (id, number, address, recipient, phone, weight, cost, date, status, courier_id, user_id).
+- Внешние ключи: `orders.courier_id → couriers.id`, `orders.user_id → users.id`.
 
-Общий обработчик 404: handler404 = "homepage.views.page_not_found".
+### SQL-запросы
+1. Список всех курьеров (ORDER BY).
+2. Список всех заказов (ORDER BY).
+3. Фильтрация курьеров по зоне (WHERE).
+4. Фильтрация заказов по весу (WHERE).
+5. JOIN: заказы с именами курьеров.
+6. JOIN: заказы с именами диспетчеров.
+7. Агрегат: общее количество курьеров (COUNT).
+8. Агрегат: количество свободных курьеров (COUNT + WHERE).
+9. GROUP BY: количество заказов у каждого курьера.
+10. GROUP BY + HAVING: курьеры с выполненными заказами.
 
-### Назначение модулей Django
+### Запуск импорта данных
 
-- homepage — главная страница и функция page() — единый HTML-каркас с Bootstrap
-- courier — страницы курьеров
-- order — страницы заказов
-- couriermanager/urls.py — корневая маршрутизация через include()
-
-### Оформление
-
-Bootstrap 5.3 через CDN. Используются: navbar, container, card, badge, btn, list-group.
-
-## Консольная версия (ПР3)
-
-Сохранена и работает.
-
-Запуск: python main.py
-
-Меню включает: добавление курьеров, пользователей, заказов; создание маршрутов; назначение заказов; отмену; поиск; сортировку.
-
-## Хранение данных
-
-Данные хранятся в JSON-файлах в каталоге data/:
-
-- couriers.json
-- users.json
-- orders.json
-- routes.json
-
-При загрузке JSON преобразуется в объекты Courier, User, Order, Route. При сохранении — обратно в JSON. Связи между объектами в JSON хранятся через идентификаторы: courier_id, user_id, route_id.
-
-## Установка и запуск
-
-Создать окружение:
-
-python3.12 -m venv venv
-source venv/bin/activate
-pip install -r requirements.txt
-
-Django-версия:
-
+```bash
+python -m db.import_json
 python manage.py migrate
 python manage.py runserver
-
-Открыть в браузере: http://127.0.0.1:8000/
-
-Консольная версия:
-
-python main.py
-
-## Тестирование
-
-pytest -v
-
-Все тесты должны завершиться успешно.
-
-## Проверка качества кода
-
-flake8 . --extend-exclude=venv
-
-При отсутствии замечаний команда ничего не выводит.
-
-## Зависимости
-
-- Django==5.2.* — веб-фреймворк
-- pytest>=8.0 — тестирование
-- flake8>=7.0 — проверка качества кода
-
-## Git
-
-Состояние репозитория:
-
-git status
-git log --oneline
-
-## Текущее состояние и план развития
-
-Реализовано:
-
-- ПР1: основы Python, рабочее окружение, Git
-- ПР2: коллекции, функции, модули, JSON, тесты, flake8
-- ПР3: ООП — классы Courier, User, Order, Route
-- ПР5: Django-проект, три приложения, маршрутизация, view-функции, веб-страницы, Bootstrap, обработка 404
-
-Планируется:
-
-- ПР6: Django-шаблоны, контекст, наследование шаблонов, статические файлы
-- ПР7: Django ORM, база данных, модели
-- ПР10: Django Forms
-- ПР11: аутентификация и авторизация
-- ПР13–15: тестирование и Docker
