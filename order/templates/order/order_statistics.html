@@ -1,8 +1,6 @@
 {% extends "base.html" %}
 
-{% block title %}
-Статистика заказов - Система управления курьерами
-{% endblock %}
+{% block title %}Статистика{% endblock %}
 
 {% block content %}
 <h1>Статистика заказов по курьерам</h1>
@@ -11,18 +9,20 @@
     <thead>
         <tr>
             <th>Курьер</th>
-            <th>Количество заказов</th>
+            <th>Всего заказов</th>
+            <th>Заказов в пути</th>
         </tr>
     </thead>
     <tbody>
         {% for row in stats %}
         <tr>
-            <td>{{ row.courier_name }}</td>
-            <td>{{ row.orders_count }}</td>
+            <td>{{ row.name }}</td>
+            <td>{{ row.total_orders }}</td>
+            <td>{{ row.active_orders }}</td>
         </tr>
         {% empty %}
         <tr>
-            <td colspan="2">Данных нет.</td>
+            <td colspan="3">Данных нет.</td>
         </tr>
         {% endfor %}
     </tbody>

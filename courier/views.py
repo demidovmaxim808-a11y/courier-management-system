@@ -1,65 +1,37 @@
-"""View-функции приложения courier (работа с SQLite)."""
+"""View-функции приложения courier (Django ORM)."""
 
-import sqlite3
+from django.db.models import Q
+from django.shortcuts import get_object_or_404, render
 
-from django.shortcuts import render
-
-DB_PATH = "data/courier.sqlite"
+from courier.models import Courier
 
 
 def couriers_list(request):
-    """Страница /couriers/: список курьеров из SQLite."""
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-
-    couriers = conn.execute("""
-        SELECT id, name, transport, zone, status
-        FROM couriers
-        ORDER BY name;
-    """).fetchall()
-    conn.close()
-
+    """Страница /couriers/: список курьеров."""
+    couriers = Courier.objects.all().order_by("name")
     context = {"couriers": couriers}
     return render(request, "courier/courier_list.html", context)
 
 
 def courier_detail(request, courier_id):
     """Страница /couriers/<int:courier_id>/."""
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-
-    courier = conn.execute("""
-        SELECT * FROM couriers WHERE id = ?;
-    """, (courier_id,)).fetchone()
-    conn.close()
-
+    courier = get_object_or_404(Courier, pk=courier_id)
     context = {"courier": courier}
-    return render(
-        request,
-        "courier/courier_detail.html",
-        context,
-        status=404 if courier is None else 200,
-    )
+    return render(request, "courier/courier_detail.html", context)
 
 
 def courier_search(request):
-    """Страница поиска курьеров по зоне (параметризованный запрос)."""
-    zone_query = request.GET.get("zone", "").strip()
-    couriers = []
+    """Страница поиска курьеров (по имени или зоне)."""
+    query = request.GET.get("q", "").strip()
+    couriers = Courier.objects.none()
 
-    if zone_query:
-        conn = sqlite3.connect(DB_PATH)
-        conn.row_factory = sqlite3.Row
-        couriers = conn.execute("""
-            SELECT id, name, transport, zone, status
-            FROM couriers
-            WHERE zone LIKE ?
-            ORDER BY name;
-        """, (f"%{zone_query}%",)).fetchall()
-        conn.close()
+    if query:
+        couriers = Courier.objects.filter(
+            Q(name__icontains=query) | Q(zone__icontains=query)
+        ).order_by("name")
 
     context = {
         "couriers": couriers,
-        "zone_query": zone_query,
+        "query": query,
     }
     return render(request, "courier/courier_search.html", context)

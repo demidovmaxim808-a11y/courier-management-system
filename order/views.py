@@ -1,68 +1,82 @@
-"""View-функции приложения order (работа с SQLite)."""
+"""View-функции приложения order (Django ORM)."""
 
-import sqlite3
+from django.core.paginator import Paginator
+from django.db.models import Count, Q
+from django.shortcuts import get_object_or_404, render
 
-from django.shortcuts import render
-
-DB_PATH = "data/courier.sqlite"
+from courier.models import Courier
+from order.models import Order
 
 
 def orders_list(request):
-    """Страница /orders/: список заказов с именами курьеров (JOIN)."""
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
+    """Страница /orders/: список заказов с фильтрами и сортировкой."""
+    # Базовый запрос: сразу подгружаем связанных курьеров и юзеров
+    queryset = Order.objects.select_related("courier", "user")
 
-    orders = conn.execute("""
-        SELECT o.id, o.number, o.address, o.status,
-               c.name AS courier_name
-        FROM orders o
-        LEFT JOIN couriers c ON o.courier_id = c.id
-        ORDER BY o.date DESC;
-    """).fetchall()
-    conn.close()
+    # Фильтрация по статусу
+    status = request.GET.get("status", "").strip()
+    if status:
+        queryset = queryset.filter(status=status)
 
-    context = {"orders": orders}
+    # Поиск по номеру или адресу
+    search = request.GET.get("search", "").strip()
+    if search:
+        queryset = queryset.filter(
+            Q(number__icontains=search) | Q(address__icontains=search)
+        )
+
+    # Фильтрация по курьеру (связанное поле)
+    courier_id = request.GET.get("courier", "").strip()
+    if courier_id.isdigit():
+        queryset = queryset.filter(courier_id=int(courier_id))
+
+    # Сортировка
+    sort = request.GET.get("sort", "date")
+    sort_fields = {
+        "date": "-date",
+        "weight": "-weight",
+        "cost": "-cost",
+    }
+    sort_field = sort_fields.get(sort, "-date")
+    queryset = queryset.order_by(sort_field, "id")
+
+    # Пагинация
+    paginator = Paginator(queryset, 5)
+    page_number = request.GET.get("page")
+    page_obj = paginator.get_page(page_number)
+
+    context = {
+        "orders": page_obj,
+        "page_obj": page_obj,
+        "status": status,
+        "search": search,
+        "courier_id": courier_id,
+        "sort": sort,
+        "couriers": Courier.objects.all(),
+    }
     return render(request, "order/order_list.html", context)
 
 
 def order_detail(request, order_id):
     """Страница /orders/<int:order_id>/."""
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-
-    order = conn.execute("""
-        SELECT o.*,
-               c.name AS courier_name,
-               u.name AS user_name
-        FROM orders o
-        LEFT JOIN couriers c ON o.courier_id = c.id
-        LEFT JOIN users u ON o.user_id = u.id
-        WHERE o.id = ?;
-    """, (order_id,)).fetchone()
-    conn.close()
-
-    context = {"order": order}
-    return render(
-        request,
-        "order/order_detail.html",
-        context,
-        status=404 if order is None else 200,
+    order = get_object_or_404(
+        Order.objects.select_related("courier", "user"),
+        pk=order_id,
     )
+    context = {"order": order}
+    return render(request, "order/order_detail.html", context)
 
 
 def order_statistics(request):
-    """Страница статистики: количество заказов у каждого курьера (GROUP BY)."""
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-
-    stats = conn.execute("""
-        SELECT c.name AS courier_name, COUNT(o.id) AS orders_count
-        FROM couriers c
-        LEFT JOIN orders o ON c.id = o.courier_id
-        GROUP BY c.id, c.name
-        ORDER BY orders_count DESC;
-    """).fetchall()
-    conn.close()
+    """Страница статистики заказов по курьерам."""
+    # Аннотация: считаем общее кол-во заказов и кол-во заказов в пути
+    stats = Courier.objects.annotate(
+        total_orders=Count("orders"),
+        active_orders=Count(
+            "orders",
+            filter=Q(orders__status="в пути")
+        ),
+    ).order_by("-total_orders")
 
     context = {"stats": stats}
     return render(request, "order/order_statistics.html", context)

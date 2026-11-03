@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'homepage',
     'courier',
     'order',
+    'users',
 ]
 
 MIDDLEWARE = [

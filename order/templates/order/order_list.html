@@ -1,17 +1,82 @@
 {% extends "base.html" %}
 
-{% block title %}
-Заказы - Система управления курьерами
-{% endblock %}
+{% block title %}Заказы{% endblock %}
 
 {% block content %}
 <h1>Заказы</h1>
-<p>Всего заказов: {{ orders|length }}</p>
-<div class="list-group">
+
+<!-- Форма фильтров -->
+<form method="get" class="mb-4">
+    <div class="row g-2">
+        <div class="col-md-3">
+            <input type="text" name="search" class="form-control" placeholder="Номер или адрес" value="{{ search }}">
+        </div>
+        <div class="col-md-2">
+            <select name="status" class="form-select">
+                <option value="">Все статусы</option>
+                <option value="новый" {% if status == 'новый' %}selected{% endif %}>Новый</option>
+                <option value="в пути" {% if status == 'в пути' %}selected{% endif %}>В пути</option>
+                <option value="доставлен" {% if status == 'доставлен' %}selected{% endif %}>Доставлен</option>
+                <option value="отменен" {% if status == 'отменен' %}selected{% endif %}>Отменен</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <select name="courier" class="form-select">
+                <option value="">Все курьеры</option>
+                {% for c in couriers %}
+                <option value="{{ c.id }}" {% if courier_id == c.id|stringformat:"s" %}selected{% endif %}>{{ c.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2">
+            <select name="sort" class="form-select">
+                <option value="date" {% if sort == 'date' %}selected{% endif %}>По дате</option>
+                <option value="weight" {% if sort == 'weight' %}selected{% endif %}>По весу</option>
+                <option value="cost" {% if sort == 'cost' %}selected{% endif %}>По стоимости</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <button type="submit" class="btn btn-primary">Применить</button>
+            <a href="{% url 'order:orders' %}" class="btn btn-outline-secondary">Сбросить</a>
+        </div>
+    </div>
+</form>
+
+<!-- Список заказов -->
+<div class="list-group mb-4">
     {% for order in orders %}
         {% include "order/includes/order_card.html" %}
     {% empty %}
         <p>Заказы не найдены.</p>
     {% endfor %}
 </div>
+
+<!-- Пагинация -->
+{% if page_obj.paginator.num_pages > 1 %}
+<nav>
+    <ul class="pagination justify-content-center">
+        {% if page_obj.has_previous %}
+        <li class="page-item">
+            <a class="page-link" href="{% querystring page=page_obj.previous_page_number %}">Назад</a>
+        </li>
+        {% else %}
+        <li class="page-item disabled"><span class="page-link">Назад</span></li>
+        {% endif %}
+
+        {% for num in page_obj.paginator.page_range %}
+        <li class="page-item {% if num == page_obj.number %}active{% endif %}">
+            <a class="page-link" href="{% querystring page=num %}">{{ num }}</a>
+        </li>
+        {% endfor %}
+
+        {% if page_obj.has_next %}
+        <li class="page-item">
+            <a class="page-link" href="{% querystring page=page_obj.next_page_number %}">Далее</a>
+        </li>
+        {% else %}
+        <li class="page-item disabled"><span class="page-link">Далее</span></li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
 {% endblock %}
