@@ -71,3 +71,10 @@ Django-проект `couriermanager`, версия Django 5.2.
 python -m db.import_json
 python manage.py migrate
 python manage.py runserver
+
+### Административная панель и Debug Toolbar (ПР10)
+
+- Настроена админ-панель Django: зарегистрированы модели Courier, User, Order.
+- Настроены списки, поиск, фильтры и встроенные формы (TabularInline) для просмотра заказов внутри карточек курьеров и пользователей.
+- Установлен и настроен Django Debug Toolbar для анализа SQL-запросов.
+- Проверена оптимизация ORM: в представлениях используется `select_related` для сокращения количества запросов к базе данных.

@@ -1,5 +1,6 @@
 """Корневая маршрутизация проекта."""
 
+from django.conf import settings
 from django.contrib import admin
 from django.urls import include, path
 
@@ -9,5 +10,11 @@ urlpatterns = [
     path("couriers/", include("courier.urls")),
     path("orders/", include("order.urls")),
 ]
+
+# Подключаем маршруты Django Debug Toolbar только в режиме отладки
+if settings.DEBUG:
+    urlpatterns += [
+        path("__debug__/", include("debug_toolbar.urls")),
+    ]
 
 handler404 = "homepage.views.page_not_found"
