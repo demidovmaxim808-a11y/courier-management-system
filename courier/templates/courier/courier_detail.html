@@ -13,33 +13,27 @@
 <div class="card">
     <div class="card-body">
         <h1 class="card-title">{{ courier.name }}</h1>
+        
+        {% if courier.photo %} <!-- НОВОЕ: Отображение фото -->
+        <img src="{{ courier.photo.url }}" alt="{{ courier.name }}" class="img-fluid mb-3" style="max-height: 200px; border-radius: 8px;">
+        {% endif %}
+        
         <p class="card-text"><strong>ID:</strong> {{ courier.id }}</p>
-        <p class="card-text">
-            <strong>Телефон:</strong> {{ courier.phone }}
-        </p>
-        <p class="card-text">
-            <strong>Транспорт:</strong> {{ courier.transport }}
-        </p>
-        <p class="card-text">
-            <strong>Зона:</strong> {{ courier.zone }}
-        </p>
-        <p class="card-text">
-            <strong>Статус:</strong> {{ courier.status }}
-        </p>
-        <p class="card-text">
-            <strong>Выполнено заказов:</strong> {{ courier.orders_done }}
-        </p>
+        <p class="card-text"><strong>Телефон:</strong> {{ courier.phone }}</p>
+        <p class="card-text"><strong>Транспорт:</strong> {{ courier.transport }}</p>
+        <p class="card-text"><strong>Зона:</strong> {{ courier.zone }}</p>
+        <p class="card-text"><strong>Статус:</strong> {{ courier.status }}</p>
+        <p class="card-text"><strong>Выполнено заказов:</strong> {{ courier.orders_done }}</p>
+        
+        <div class="mt-3"> <!-- НОВОЕ: Кнопка редактирования -->
+            <a href="{% url 'courier:courier_edit' courier.id %}" class="btn btn-primary">Редактировать</a>
+            <a href="{% url 'courier:couriers' %}" class="btn btn-outline-secondary">← к списку курьеров</a>
+        </div>
     </div>
 </div>
 {% else %}
 <h1 class="text-danger">Курьер не найден</h1>
 <p>Курьер с указанным идентификатором отсутствует.</p>
+<a href="{% url 'courier:couriers' %}" class="btn btn-outline-secondary mt-3">← к списку курьеров</a>
 {% endif %}
-
-<a
-    href="{% url 'courier:couriers' %}"
-    class="btn btn-outline-secondary mt-3"
->
-    &larr; к списку курьеров
-</a>
 {% endblock %}

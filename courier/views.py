@@ -1,9 +1,11 @@
 """View-функции приложения courier (Django ORM)."""
 
 from django.db.models import Q
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import get_object_or_404, render, redirect
+from django.contrib import messages
 
 from courier.models import Courier
+from courier.forms import CourierForm  # <-- ДОБАВЛЕНО
 
 
 def couriers_list(request):
@@ -35,3 +37,35 @@ def courier_search(request):
         "query": query,
     }
     return render(request, "courier/courier_search.html", context)
+
+
+# НОВОЕ: Создание курьера
+def courier_create(request):
+    """Создание нового курьера."""
+    if request.method == 'POST':
+        form = CourierForm(request.POST, request.FILES)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Курьер успешно добавлен!")
+            return redirect('courier:couriers')
+    else:
+        form = CourierForm()
+    
+    return render(request, 'courier/courier_form.html', {'form': form, 'title': 'Добавить курьера'})
+
+
+# НОВОЕ: Редактирование курьера
+def courier_edit(request, courier_id):
+    """Редактирование курьера."""
+    courier = get_object_or_404(Courier, pk=courier_id)
+    
+    if request.method == 'POST':
+        form = CourierForm(request.POST, request.FILES, instance=courier)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Данные курьера обновлены!")
+            return redirect('courier:courier_detail', courier_id=courier.id)
+    else:
+        form = CourierForm(instance=courier)
+    
+    return render(request, 'courier/courier_form.html', {'form': form, 'title': 'Редактировать курьера'})
